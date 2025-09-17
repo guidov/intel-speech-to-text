@@ -1,6 +1,6 @@
 [Unit]
 Description=Speech-to-Text Key Listener
-Documentation=https://github.com/omarchy/speech-to-text
+Documentation=https://github.com/michabbb/omarchy-speech-to-text
 After=ydotoold.service
 Wants=ydotoold.service
 
