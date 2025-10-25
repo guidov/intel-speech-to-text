@@ -28,7 +28,7 @@ The nice thing about this framework is that it allows input into any application
 ├── key_listener.py          # Root hotkey listener (records audio, launches STT)
 ├── detect_keyboard.py       # Helper script for keyboard device detection
 ├── requirements.txt         # Python dependencies
-├── speech_to_text.py        # Faster Whisper transcription + ydotool typing
+├── speech_to_text.py        # Whisper transcription + ydotool typing
 ├── systemd/
 │   ├── speech-to-text-listener.service  # Service for key_listener.py
 │   └── ydotoold.service                 # ydotool daemon with boot sequencing fix
@@ -51,9 +51,9 @@ Copy `config.example.py` to `config.py` and adjust it for your environment befor
    ```
    > `ydotool` lives in the `community` repository. If you are using another distribution, install it from your package manager or build from source.
 3. **Optional key remapping** – if you plan to trigger dictation with a mouse button or unusual key, install a remapper such as `input-remapper` or Sway/Hyprland keybinds.
-4. **Python 3.10+** – required for the virtual environment and Faster Whisper.
+4. **Python 3.10+** – required for the virtual environment.
 
-> **Intel XPU acceleration (recommended):** Intel Arc GPUs, integrated graphics (iGPU), and other Intel XPU hardware are supported with Intel Extension for PyTorch (IPEX) for significant performance improvements. The system will automatically detect available Intel XPU hardware at runtime and apply optimizations. You can configure the behavior using the `WHISPER_DEVICE` setting in `config.py`:
+> **Intel XPU acceleration:** Intel Arc GPUs, integrated graphics (iGPU), and other Intel XPU hardware are supported with Intel Extension for PyTorch (IPEX) for significant performance improvements. The system will automatically detect available Intel XPU hardware at runtime and apply optimizations. You can configure the behavior using the `WHISPER_DEVICE` setting in `config.py`:
 > - `auto` (default): automatically detect and use XPU if available, otherwise CPU
 > - `cpu`: force CPU usage (may be faster for small models)
 > - `xpu`: force Intel XPU usage (will fail if not available)
@@ -84,7 +84,7 @@ pip install -r requirements.txt
 ```
 
 The default `requirements.txt` includes Intel XPU optimizations with Intel Extension for PyTorch (IPEX):
-- `torch==2.8.0+xpu` - PyTorch with Intel XPU support
+- `torch` - PyTorch with Intel XPU support
 - `intel-extension-for-pytorch` - Intel optimizations for PyTorch
 - `openai-whisper` - CPU/GPU accelerated Whisper implementation
 
@@ -212,17 +212,15 @@ If typing fails, check that `ydotoold` is running and the socket path matches `c
 - **`Error: [Errno 19] No such device`** – `DEVICE_PATH` in `config.py` is wrong or the device id changes between boots. The application now includes dynamic device detection that will automatically find your keyboard device at runtime if the configured path doesn't exist. If automatic detection fails, you can manually run `sudo evtest` or use the helper script `python detect_keyboard.py` to find your keyboard device and update the path.
 - **`failed to connect socket '/run/user/1000/.ydotool_socket'`** – `ydotoold` did not start or the runtime directory was re-created after boot. Confirm the service uses the modified unit provided here.
 - **`arecord` command fails** – install `alsa-utils` and confirm the microphone works (`arecord -f S16_LE -r 16000 test.wav`).
-- **Whisper model loads slowly** – larger models can take several seconds. Consider the `tiny` or `base` model for faster start, or configure GPU acceleration.
+- **Whisper model loads slowly** – larger models can take several seconds. Consider the `tiny` or `base` model for faster start.
 - **Typing lag** – `ydotool` sends events sequentially. If performance is an issue, experiment with the `ydotool type --delay` flag by modifying `speech_to_text.py`.
 
 ---
 
 ## Model Cache Management
 
-Whisper models are downloaded once and cached locally:
-
-- **When running as root** (systemd service): Models are cached in `/home/<your-user>/.cache/whisper/`
-- **Model files**: Each model is a `.pt` file (e.g., `medium.en.pt`, `small.en.pt`, `turbo.pt`)
+Whisper models are downloaded once and cached locally in `~/.cache/whisper`.
+- **Model files**: Each model is a `.pt` file (e.g., `medium.en.pt`, `small.en.pt`)
 - **Storage**: Models range from ~73MB (tiny) to ~1.5GB (medium/large)
 
 To free up disk space:
@@ -245,25 +243,7 @@ Models will be re-downloaded automatically when needed.
 
 - Both services run as root. Restrict access to the repository directory and review the scripts before installing on production machines.
 - `key_listener.py` invokes `sudo -u <TARGET_USER> arecord ...`. Ensure the root account can run `sudo` without prompting (the default for root).
-- The scripts type whatever Faster Whisper recognises. Consider adding keyword filtering if you plan to use it in sensitive contexts.
-
-## GitHub Publication Security Considerations
-
-> ⚠️ **Important Security Notice**: Before publishing this project to a public repository on GitHub, please consider the following:
-> 
-> - **No API Keys**: This project does not store API keys in the codebase. The transcription runs completely offline using local Whisper models.
-> - **Root Privileges**: This software requires root privileges to access input devices (`/dev/input`). Be aware that the code will be publicly accessible and contains system-level access patterns.
-> - **Environment Variables**: Make sure no sensitive environment variables or configuration files (like `config.py`) are accidentally committed to the repository.
-> - **System Dependencies**: The software interacts with low-level system components (audio devices, input devices, Wayland). Ensure users understand the security implications of running software that requires such access.
-> - **ydotool Integration**: The software uses `ydotool` to type text, which has potential for unintended system interactions. The typing functionality runs with root privileges to interface with Wayland.
-
----
-
-## Extending / Customising
-
-- Change the trigger key by editing the `KEY_RIGHTCTRL` check in `key_listener.py` or remap your preferred key/button to Right Ctrl using `input-remapper` or compositor keybinds.
-- To support multiple hotkeys or languages, extend `speech_to_text.py` to pick models dynamically or to send the text to other applications (e.g., copy to clipboard instead of typing).
-- GPU users can install `torch` + `faster-whisper` with `device="cuda"` in `speech_to_text.py` and adjust `WHISPER_COMPUTE_TYPE` to `float16` for a large speed boost.
+- The scripts type whatever Whisper recognises. Consider adding keyword filtering if you plan to use it in sensitive contexts.
 
 ---
 

@@ -35,7 +35,7 @@ SAMPLE_FORMAT = "S16_LE"
 DISPLAY = ":0"
 WAYLAND_DISPLAY = None  # e.g. "wayland-0" if you want to pin it explicitly.
 
-# Faster-Whisper model selection.
+# Whisper model selection.
 WHISPER_MODEL_SIZE = "small"
 WHISPER_COMPUTE_TYPE = "int8"
 
