@@ -24,7 +24,7 @@ AUDIO_FILE = Path("/tmp/recorded_audio.wav")
 PYTHON_VENV = PROJECT_ROOT / "venv" / "bin" / "python3"
 
 # Script that performs speech-to-text. Paths can be absolute or relative to PROJECT_ROOT.
-SPEECH_TO_TEXT_SCRIPT = PROJECT_ROOT / "speech_to_text.py"
+SPEECH_TO_TEXT_SCRIPT = PROJECT_ROOT / "intel-speech-to-text"
 
 # Audio capture settings for ``arecord``.
 SAMPLE_RATE_HZ = 16_000
@@ -51,7 +51,7 @@ WHISPER_DEVICE = "auto"
 
 # Optional log file overrides. Leave as ``None`` to log only to stderr.
 KEY_LISTENER_LOG_FILE = Path("/tmp/key_listener.log")
-SPEECH_TO_TEXT_LOG_FILE = Path("/tmp/speech_to_text_root.log")
+INTEL_SPEECH_TO_TEXT_LOG_FILE = Path("/tmp/intel-speech-to-text.log")
 
 # ydotool socket path. Matches the systemd unit in ``systemd/ydotoold.service``.
 YDOTOOL_SOCKET = Path("/run/user/1000/.ydotool_socket")

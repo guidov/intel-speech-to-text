@@ -28,9 +28,9 @@ The nice thing about this framework is that it allows input into any application
 ├── key_listener.py          # Root hotkey listener (records audio, launches STT)
 ├── detect_keyboard.py       # Helper script for keyboard device detection
 ├── requirements.txt         # Python dependencies
-├── speech_to_text.py        # Whisper transcription + ydotool typing
+├── intel-speech-to-text        # Whisper transcription + ydotool typing
 ├── systemd/
-│   ├── speech-to-text-listener.service  # Service for key_listener.py
+│   ├── intel-speech-to-text.service  # Service for key_listener.py
 │   └── ydotoold.service                 # ydotool daemon with boot sequencing fix
 └── LICENSE
 ```
@@ -53,6 +53,16 @@ Copy `config.example.py` to `config.py` and adjust it for your environment befor
 3. **Optional key remapping** – if you plan to trigger dictation with a mouse button or unusual key, install a remapper such as `input-remapper` or Sway/Hyprland keybinds.
 4. **Python 3.10+** – required for the virtual environment.
 
+## Prerequisites (Ubuntu)
+
+```bash
+sudo mkdir -p /opt
+sudo chown "$USER" /opt
+cd /opt
+git clone https://github.com/guidov/intel-speech-to-text.git
+cd intel-speech-to-text
+```
+
 > **Intel XPU acceleration:** Intel Arc GPUs, integrated graphics (iGPU), and other Intel XPU hardware are supported with Intel Extension for PyTorch (IPEX) for significant performance improvements. The system will automatically detect available Intel XPU hardware at runtime and apply optimizations. You can configure the behavior using the `WHISPER_DEVICE` setting in `config.py`:
 > - `auto` (default): automatically detect and use XPU if available, otherwise CPU
 > - `cpu`: force CPU usage (may be faster for small models)
@@ -62,19 +72,7 @@ Copy `config.example.py` to `config.py` and adjust it for your environment befor
 
 ## Installation
 
-### 1. Clone the repository
-
-```bash
-sudo mkdir -p /opt
-sudo chown "$USER" /opt
-cd /opt
-git clone https://github.com/omarchy/speech-to-text.git
-cd speech-to-text
-```
-
-Feel free to adjust the target path, but remember to update the systemd unit files accordingly.
-
-### 2. Configure Python environment
+### 1. Configure Python environment
 
 ```bash
 python -m venv venv
@@ -88,7 +86,7 @@ The default `requirements.txt` includes Intel XPU optimizations with Intel Exten
 - `intel-extension-for-pytorch` - Intel optimizations for PyTorch
 - `openai-whisper` - CPU/GPU accelerated Whisper implementation
 
-### 3. Prepare `config.py`
+### 2. Prepare `config.py`
 
 ```bash
 cp config.example.py config.py
@@ -111,13 +109,13 @@ sudo python detect_keyboard.py
 ```
 This script will scan for input devices and identify keyboard devices with the trigger key.
 
-### 4. Install systemd units
+### 3. Install systemd units
 
 Copy the service files and adjust them for your UID/GID and project path.
 
 ```bash
 sudo install -m 0644 systemd/ydotoold.service /etc/systemd/system/ydotoold.service
-sudo install -m 0644 systemd/speech-to-text-listener.service /etc/systemd/system/speech-to-text-listener.service
+sudo install -m 0644 systemd/intel-speech-to-text.service /etc/systemd/system/intel-speech-to-text.service
 ```
 
 Edit `/etc/systemd/system/ydotoold.service`:
@@ -125,7 +123,7 @@ Edit `/etc/systemd/system/ydotoold.service`:
 - Replace every occurrence of `1000` with your user’s numeric UID and GID (see `id -u`, `id -g`).
 - Update the socket path if you changed it in `config.py`.
 
-Edit `/etc/systemd/system/speech-to-text-listener.service`:
+Edit `/etc/systemd/system/intel-speech-to-text.service`:
 
 - Update `WorkingDirectory` and `ExecStart` so they match the absolute project path and Python interpreter inside your virtual environment.
 
@@ -137,7 +135,7 @@ sudo systemctl enable --now ydotoold.service
 sudo systemctl enable --now intel-speech-to-text.service
 ```
 
-### 5. Verify services
+### 4. Verify services
 
 - Ensure `ydotoold` created the socket:
   ```bash
@@ -165,7 +163,7 @@ The key listener should log that it is watching `KEY_RIGHTCTRL` (or whichever ke
              │ WAV file
              ▼
 ┌──────────────────────────┐
-│ speech_to_text.py (root) │
+│ intel-speech-to-text (root) │
 │  • loads OpenAI Whisper  │
 │  • transcribes segments  │
 │  • uses ydotool type     │
@@ -178,7 +176,7 @@ The key listener should log that it is watching `KEY_RIGHTCTRL` (or whichever ke
 Key points:
 
 - `key_listener.py` must run as root to read `/dev/input` and to interact with `sudo -u <user> arecord`. The actual audio capture happens as the unprivileged desktop user, so PulseAudio/PipeWire routing behaves normally.
-- `speech_to_text.py` runs as root but inherits the user’s runtime environment (`XDG_RUNTIME_DIR`, Wayland display) so `ydotool` can access the compositor socket. The service fixes a boot timing race by ensuring the user runtime directory exists before `ydotoold` starts.
+- `intel-speech-to-text` runs as root but inherits the user’s runtime environment (`XDG_RUNTIME_DIR`, Wayland display) so `ydotool` can access the compositor socket. The service fixes a boot timing race by ensuring the user runtime directory exists before `ydotoold` starts.
 - **Intel XPU Acceleration**: The system automatically detects available Intel XPU hardware and applies Intel Extension for PyTorch (IPEX) optimizations for maximum transcription speed.
 - **Dynamic Keyboard Detection**: The system automatically detects keyboard devices at runtime if the configured path doesn't exist.
 
@@ -213,7 +211,7 @@ If typing fails, check that `ydotoold` is running and the socket path matches `c
 - **`failed to connect socket '/run/user/1000/.ydotool_socket'`** – `ydotoold` did not start or the runtime directory was re-created after boot. Confirm the service uses the modified unit provided here.
 - **`arecord` command fails** – install `alsa-utils` and confirm the microphone works (`arecord -f S16_LE -r 16000 test.wav`).
 - **Whisper model loads slowly** – larger models can take several seconds. Consider the `tiny` or `base` model for faster start.
-- **Typing lag** – `ydotool` sends events sequentially. If performance is an issue, experiment with the `ydotool type --delay` flag by modifying `speech_to_text.py`.
+- **Typing lag** – `ydotool` sends events sequentially. If performance is an issue, experiment with the `ydotool type --delay` flag by modifying `intel-speech-to-text`.
 
 ---
 
