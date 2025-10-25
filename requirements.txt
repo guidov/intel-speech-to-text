@@ -1,5 +1,8 @@
 # Python dependencies for the speech-to-text stack
-faster-whisper
-numpy
-soundfile
+openai-whisper
 evdev
+
+# Intel XPU optimizations
+torch==2.8.0+xpu
+--extra-index-url=https://download.pytorch.org/whl/xpu
+intel-extension-for-pytorch @ https://intel-extension-for-pytorch.s3.us-east-1.amazonaws.com/ipex_dev/xpu/intel_extension_for_pytorch-2.8.10.post0%2Bxpu-cp312-cp312-linux_x86_64.whl

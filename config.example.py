@@ -39,9 +39,24 @@ WAYLAND_DISPLAY = None  # e.g. "wayland-0" if you want to pin it explicitly.
 WHISPER_MODEL_SIZE = "small"
 WHISPER_COMPUTE_TYPE = "int8"
 
+# Device for Whisper inference: "auto", "cpu", or "xpu"
+# - "auto": automatically detect and use XPU if available, otherwise CPU
+# - "cpu": force CPU usage (may be faster for small models)
+# - "xpu": force Intel XPU/GPU usage (will fail if not available)
+WHISPER_DEVICE = "auto"
+
+# NOTE: Whisper models are cached in ~/.cache/whisper/
+# Models range from ~73MB (tiny) to ~1.5GB (medium/large)
+# Delete cached models with: rm -rf ~/.cache/whisper/
+
 # Optional log file overrides. Leave as ``None`` to log only to stderr.
 KEY_LISTENER_LOG_FILE = Path("/tmp/key_listener.log")
 SPEECH_TO_TEXT_LOG_FILE = Path("/tmp/speech_to_text_root.log")
 
 # ydotool socket path. Matches the systemd unit in ``systemd/ydotoold.service``.
 YDOTOOL_SOCKET = Path("/run/user/1000/.ydotool_socket")
+
+# ydotool typing speed in milliseconds between keystrokes
+# Lower values = faster typing (default: 12ms, minimum: 0ms for instant)
+# Set to 0 for maximum speed, or 25-50 for more human-like typing
+YDOTOOL_KEY_DELAY = 0
