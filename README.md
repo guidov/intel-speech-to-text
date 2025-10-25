@@ -1,6 +1,6 @@
 # Offline Speech-to-Text for Intel XPU (Wayland)
 
-This is a fork of [omarchy-speech-to-text](https://github.com/omarchy/speech-to-text.git) with Intel XPU optimization
+This is a fork of [omarchy-speech-to-text](https://github.com/michabbb/omarchy-speech-to-text) with Intel XPU optimization
 
 This project reproduces the hands-free dictation setup used on Linux with a Wayland compositor. A dedicated key listener records audio while you hold a hotkey and forwards the audio to OpenAI Whisper installed locally. Once transcription finishes, the recognised text is typed into the focused window via [`ydotool`](https://github.com/ReimuNotMoe/ydotool).
 
@@ -55,13 +55,17 @@ Copy `config.example.py` to `config.py` and adjust it for your environment befor
 
 ## Prerequisites (Ubuntu)
 
-```bash
-sudo mkdir -p /opt
-sudo chown "$USER" /opt
-cd /opt
-git clone https://github.com/guidov/intel-speech-to-text.git
-cd intel-speech-to-text
-```
+1. **Audio & input utilities**
+   ```bash
+   sudo apt update
+   sudo apt install alsa-utils python3-evdev
+   ```
+2. **Wayland automation tools**
+   ```bash
+   sudo apt install ydotool
+   ```
+3. **Optional key remapping** – if you plan to trigger dictation with a mouse button or unusual key, install a remapper such as `input-remapper`.
+4. **Python 3.10+** – required for the virtual environment.
 
 > **Intel XPU acceleration:** Intel Arc GPUs, integrated graphics (iGPU), and other Intel XPU hardware are supported with Intel Extension for PyTorch (IPEX) for significant performance improvements. The system will automatically detect available Intel XPU hardware at runtime and apply optimizations. You can configure the behavior using the `WHISPER_DEVICE` setting in `config.py`:
 > - `auto` (default): automatically detect and use XPU if available, otherwise CPU
